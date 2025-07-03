@@ -1,16 +1,16 @@
 package io.reflectoring.Expotiflix.service;
 
+
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import io.reflectoring.Expotiflix.model.SpotifyProfileDTO;
 import java.util.Collections;
-@Service // Indica que esta clase es un servicio y puede ser inyectada con @Autowired
-public class SpotifyService {
 
-    public SpotifyProfileDTO getUserInfo(String authorizationHeader) {
-        String url = "https://api.spotify.com/v1/me";
+@Service
+public class SpotifyCheckFollowService {
+    public boolean[] checkIfTracksAreSaved(String authorizationHeader, String ids) {
+        String url = "https://api.spotify.com/v1/me/tracks/contains?ids=" + ids;
 
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", authorizationHeader);
@@ -19,13 +19,14 @@ public class SpotifyService {
         HttpEntity<String> entity = new HttpEntity<>(headers);
         RestTemplate restTemplate = new RestTemplate();
 
-        ResponseEntity<SpotifyProfileDTO> response = restTemplate.exchange(
+        ResponseEntity<boolean[]> response = restTemplate.exchange(
                 url,
                 HttpMethod.GET,
                 entity,
-                SpotifyProfileDTO.class
+                boolean[].class
         );
 
         return response.getBody();
     }
+
 }

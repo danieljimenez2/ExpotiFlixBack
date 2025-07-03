@@ -1,4 +1,4 @@
-package io.reflectoring.Expotiflix.model;
+package io.reflectoring.Expotiflix.model.user;
 import java.util.List;
 import java.util.Map;
 import lombok.Data;

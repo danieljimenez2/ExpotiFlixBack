@@ -10,4 +10,5 @@ public class ArtistsResponseDTO {
         private String next;
         private String previous;
         private int total;
+        private String offset;
 }
