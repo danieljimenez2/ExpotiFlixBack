@@ -12,8 +12,8 @@ import java.util.List;
 import java.util.Map;
 
 @Service
-public class SpotifyDeleteService {
-    public void deleteSavedTracks(String authorizationHeader, String ids) {
+public class SpotifyPutService {
+    public void saveTracks(String authorizationHeader, String ids) {
         String url = "https://api.spotify.com/v1/me/tracks?ids=" + ids;
 
         HttpHeaders headers = new HttpHeaders();
@@ -21,17 +21,16 @@ public class SpotifyDeleteService {
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
+        HttpEntity<String> entity = new HttpEntity<>(null, headers); // No body needed
 
-        restTemplate.exchange(url, HttpMethod.DELETE, entity, Void.class);
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.exchange(url, HttpMethod.PUT, entity, Void.class);
     }
-    public void unfollowEntity(String authorizationHeader, String ids, String type) {
+    public void followEntity(String authorizationHeader, String ids, String type) {
         String baseUrl = "https://api.spotify.com/v1";
         String url;
-        HttpEntity<String> entity;
+        HttpEntity<?> entity;
         HttpHeaders headers = new HttpHeaders();
-
         headers.set("Authorization", authorizationHeader);
         headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
         headers.setContentType(MediaType.APPLICATION_JSON);
@@ -41,12 +40,12 @@ public class SpotifyDeleteService {
         switch (type) {
             case "tracks":
                 url = baseUrl + "/me/tracks?ids=" + ids;
-                entity = new HttpEntity<>(headers);
+                entity = new HttpEntity<>(null, headers);
                 break;
 
             case "albums":
                 url = baseUrl + "/me/albums?ids=" + ids;
-                entity = new HttpEntity<>(headers);
+                entity = new HttpEntity<>(null, headers);
                 break;
 
             case "artist":
@@ -73,19 +72,6 @@ public class SpotifyDeleteService {
                 throw new IllegalArgumentException("Tipo no soportado: " + type);
         }
 
-        restTemplate.exchange(url, HttpMethod.DELETE, entity, Void.class);
+        restTemplate.exchange(url, HttpMethod.PUT, entity, Void.class);
     }
-    public void unfollowArtistOrUser(String authorizationHeader, String ids, String type) {
-        String url = "https://api.spotify.com/v1/me/following?type=" + type + "&ids=" + ids;
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", authorizationHeader);
-        headers.setAccept(Collections.singletonList(MediaType.APPLICATION_JSON));
-
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
-
-        restTemplate.exchange(url, HttpMethod.DELETE, entity, Void.class);
-    }
-
 }

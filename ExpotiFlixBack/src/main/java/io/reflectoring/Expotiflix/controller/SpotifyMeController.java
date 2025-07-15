@@ -9,6 +9,7 @@ import io.reflectoring.Expotiflix.model.track.TracksResponseDTO;
 import io.reflectoring.Expotiflix.service.SpotifyCheckFollowService;
 import io.reflectoring.Expotiflix.service.SpotifyDeleteService;
 import io.reflectoring.Expotiflix.service.SpotifyMeService;
+import io.reflectoring.Expotiflix.service.SpotifyPutService;
 import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.*;
@@ -28,6 +29,9 @@ public class SpotifyMeController {
 
     @Autowired
     private SpotifyDeleteService spotifyDeleteService;
+
+    @Autowired
+    private SpotifyPutService spotifyPutService;
 
     @GetMapping("/profile")
     public ResponseEntity<SpotifyProfileDTO> getSpotifyUser(@RequestHeader("Authorization") String authorizationHeader) {
@@ -71,7 +75,7 @@ public class SpotifyMeController {
         PlaylistResponseDTO response = spotifyMeService.getFollowedPlaylist(authorizationHeader);
         return ResponseEntity.ok(response);
     }
-
+    //Recoger las canciones que tengo guardadas
     @GetMapping("/tracks")
     public ResponseEntity<?> getFollowedTracks(@RequestHeader("Authorization")String authorizationHeader)
     {
@@ -81,6 +85,7 @@ public class SpotifyMeController {
         SavedTracksResponse response = spotifyMeService.getFollowedTracks(authorizationHeader);
         return ResponseEntity.ok(response);
     }
+    //Check Si hay canciones guardadas
     @GetMapping("/tracks/contains")
     public ResponseEntity<?>checkIfTracksAreSaved
             (@RequestHeader("Authorization") String authorizationHeader,
@@ -92,10 +97,98 @@ public class SpotifyMeController {
         boolean[] response = spotifyCheckService.checkIfTracksAreSaved(authorizationHeader, ids);
         return ResponseEntity.ok(response);
     }
+    //Borrar canciones
+    @DeleteMapping("/tracks")
+    public ResponseEntity<?> removeSavedTracks(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam("ids") String ids) {
+
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing or invalid Authorization header");
+        }
+
+        try {
+            spotifyDeleteService.deleteSavedTracks(authorizationHeader, ids);
+            return ResponseEntity.noContent().build(); // 204 No Content
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to remove tracks: " + e.getMessage());
+        }
+    }
+    @PutMapping("/tracks")
+    public ResponseEntity<?> saveTracks(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam("ids") String ids
+    ) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing or invalid Authorization header");
+        }
+
+        try {
+            spotifyPutService.saveTracks(authorizationHeader, ids);
+            return ResponseEntity.noContent().build(); // 204 No Content
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to save tracks: " + e.getMessage());
+        }
+    }
+    @GetMapping("/following")
+    public ResponseEntity<?> checkIfFollowing(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam("type") String type,
+            @RequestParam("ids") String ids
+    ) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing or invalid Authorization header");
+        }
+
+        if (!type.equals("artist") && !type.equals("user")) {
+            return ResponseEntity.badRequest().body("Invalid type. Use 'artist' or 'user'.");
+        }
+        try {
+            boolean[] response = spotifyCheckService.checkIfArtistOrUserAreFollowed(authorizationHeader, ids, type);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error checking follow status: " + e.getMessage());
+        }
+    }
+    // Guardar o seguir cualquier tipo de entidad (track, album, artist, user, playlist)
+    @PutMapping("/follow")
+    public ResponseEntity<?> followEntity(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam("type") String type,
+            @RequestParam("ids") String ids
+    ) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing or invalid Authorization header");
+        }
+
+        try {
+            spotifyPutService.followEntity(authorizationHeader, ids, type);
+            return ResponseEntity.noContent().build(); // 204 No Content
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to follow: " + e.getMessage());
+        }
+    }
+
+    // Dejar de seguir o eliminar cualquier tipo de entidad
+    @DeleteMapping("/unfollow")
+    public ResponseEntity<?> unfollowEntity(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam("type") String type,
+            @RequestParam("ids") String ids
+    ) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Missing or invalid Authorization header");
+        }
+
+        try {
+            spotifyDeleteService.unfollowEntity(authorizationHeader, ids, type);
+            return ResponseEntity.noContent().build(); // 204 No Content
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to unfollow: " + e.getMessage());
+        }
+    }
 
 
 
-
-
-
-}
+    }

@@ -23,6 +23,25 @@ public class BrowseController {
         return ResponseEntity.ok(albumResponse);
     }
 
+    @GetMapping("/search")
+    public ResponseEntity<String> searchSpotify(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestParam("q") String query,
+            @RequestParam("type") String type // puede ser album, artist, track
+    ) {
+        if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Authorization header missing or invalid.");
+        }
+
+        try {
+            String searchResult = spotifyBrowseService.searchAnything(authorizationHeader, query, type);
+            return ResponseEntity.ok(searchResult);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error during search: " + e.getMessage());
+        }
+    }
+
 
 
 }
